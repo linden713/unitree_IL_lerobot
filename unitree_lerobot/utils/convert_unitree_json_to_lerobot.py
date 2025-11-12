@@ -9,7 +9,7 @@ Script Json to Lerobot.
 python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py \
     --raw-dir $HOME/datasets/g1_grabcube_double_hand \
     --repo-id your_name/g1_grabcube_double_hand \
-    --robot_type Unitree_G1_Dex3 \ 
+    --robot_type Unitree_G1_Dex3 \
     --push_to_hub
 """
 
@@ -24,9 +24,9 @@ import shutil
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-from typing import Literal, List, Dict, Optional
+from typing import Literal
 
-from lerobot.constants import HF_LEROBOT_HOME
+from lerobot.utils.constants import HF_LEROBOT_HOME
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 from unitree_lerobot.utils.constants import ROBOT_CONFIGS
@@ -84,20 +84,20 @@ class JsonDataset:
         """Return the number of episodes in the dataset."""
         return len(self.episode_paths)
 
-    def _init_cache(self) -> List:
+    def _init_cache(self) -> list:
         """Initialize data cache if enabled."""
 
         self.episodes_data_cached = []
         for episode_path in tqdm.tqdm(self.episode_paths, desc="Loading Cache Json"):
             json_path = os.path.join(episode_path, self.json_file)
-            with open(json_path, "r", encoding="utf-8") as jsonf:
+            with open(json_path, encoding="utf-8") as jsonf:
                 self.episodes_data_cached.append(json.load(jsonf))
 
         print(f"==> Cached {len(self.episodes_data_cached)} episodes")
 
         return self.episodes_data_cached
 
-    def _extract_data(self, episode_data: Dict, key: str, parts: List[str]) -> np.ndarray:
+    def _extract_data(self, episode_data: dict, key: str, parts: list[str]) -> np.ndarray:
         """
         Extract data from episode dictionary for specified parts.
 
@@ -152,8 +152,8 @@ class JsonDataset:
 
     def get_item(
         self,
-        index: Optional[int] = None,
-    ) -> Dict:
+        index: int | None = None,
+    ) -> dict:
         """Get a training sample from the dataset."""
 
         file_path = np.random.choice(self.episode_paths) if index is None else self.episode_paths[index]
@@ -292,8 +292,9 @@ def populate_dataset(
             for camera, img_array in cameras.items():
                 frame[f"observation.images.{camera}"] = img_array[i]
 
-            dataset.add_frame(frame, task=task)
+            frame["task"] = task
 
+            dataset.add_frame(frame)
         dataset.save_episode()
 
     return dataset

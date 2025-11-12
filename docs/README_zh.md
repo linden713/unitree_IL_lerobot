@@ -44,6 +44,8 @@ git submodule update --init --recursive
 conda create -y -n unitree_lerobot python=3.10
 conda activate unitree_lerobot
 
+conda install ffmpeg=7.1.1 -c conda-forge
+
 # 安装 LeRobot
 cd lerobot && pip install -e .
 
@@ -85,7 +87,7 @@ for step_idx in tqdm.tqdm(range(from_idx, to_idx)):
 ```bash
 cd unitree_lerobot/lerobot
 
-python src/lerobot/scripts/visualize_dataset.py \
+python src/lerobot/scripts/lerobot_dataset_viz.py \
     --repo-id unitreerobotics/G1_Dex3_ToastedBread_Dataset \
     --episode-index 0
 ```
@@ -141,9 +143,9 @@ python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py
 
 # 3. 🚀 训练
 
-[请详细阅读官方 lerobot 训练实例与相关参数](https://github.com/huggingface/lerobot/blob/main/examples/4_train_policy_with_script.md)
+[请详细阅读官方 lerobot 训练实例与相关参数](https://github.com/huggingface/lerobot/tree/main/docs/source)
 
-- `训练 act`
+- `训练 act` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/act.mdx)
 
 ```
 cd unitree_lerobot/lerobot
@@ -154,7 +156,7 @@ python src/lerobot/scripts/train.py \
     --policy.type=act
 ```
 
-- `训练 Diffusion Policy`
+- `训练 Diffusion Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/policy_diffusion_README.md)
 
 ```
 cd unitree_lerobot/lerobot
@@ -165,7 +167,7 @@ python src/lerobot/scripts/train.py \
     --policy.type=diffusion
 ```
 
-- `训练 pi0`
+- `训练 pi0` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/pi0.mdx)
 
 ```
 cd unitree_lerobot/lerobot
@@ -175,6 +177,40 @@ python src/lerobot/scripts/train.py \
     --policy.push_to_hub=false \
     --policy.type=pi0
 ```
+
+- `训练 Pi05 Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/pi05.mdx)
+
+```bash
+cd unitree_lerobot/lerobot
+
+python src/lerobot/scripts/lerobot_train.py \
+    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
+    --policy.type=pi05 \
+    --output_dir=./outputs/pi05_training \
+    --job_name=pi05_training \
+    --policy.pretrained_path=lerobot/pi05_base \
+    --policy.compile_model=true \
+    --policy.gradient_checkpointing=true \
+    --policy.dtype=bfloat16 \
+    --policy.device=cuda \
+    --policy.push_to_hub=false
+```
+
+- `训练 Gr00t Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/groot.mdx)
+
+```bash
+cd unitree_lerobot/lerobot
+
+python src/lerobot/scripts/lerobot_train.py \
+    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
+    --output_dir=./outputs/groot_training \
+    --policy.push_to_hub=false \
+    --policy.type=groot \
+    --policy.tune_diffusion_model=false \
+    --job_name=groot_training
+```
+
+如果你想使用多 GPU 训练，请参考 [here](https://github.com/huggingface/lerobot/blob/main/docs/source/multi_gpu_training.mdx)
 
 # 4. 🤖 真机测试
 

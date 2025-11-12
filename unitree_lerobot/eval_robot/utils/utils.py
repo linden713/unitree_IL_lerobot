@@ -4,10 +4,11 @@ from typing import Any
 from contextlib import nullcontext
 from copy import copy
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.processor import PolicyAction, PolicyProcessorPipeline
 
 
 import logging_mp
@@ -35,9 +36,12 @@ def predict_action(
     observation: dict[str, np.ndarray],
     policy: PreTrainedPolicy,
     device: torch.device,
+    preprocessor: PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],
+    postprocessor: PolicyProcessorPipeline[PolicyAction, PolicyAction],
     use_amp: bool,
     task: str | None = None,
     use_dataset: bool | None = False,
+    robot_type: str | None = None,
 ):
     observation = copy(observation)
     with (
@@ -56,11 +60,15 @@ def predict_action(
 
             observation[name] = observation[name].unsqueeze(0).to(device)
 
-        observation["task"] = [task if task else ""]
+        observation["task"] = task if task else ""
+        observation["robot_type"] = robot_type if robot_type else ""
+
+        observation = preprocessor(observation)
 
         # Compute the next action with the policy
         # based on the current observation
         action = policy.select_action(observation)
+        action = postprocessor(action)
 
         # Remove batch dimension
         action = action.squeeze(0)
@@ -123,6 +131,8 @@ class EvalRealConfig:
     visualization: bool = False
     send_real_robot: bool = False
     use_dataset: bool = False
+
+    rename_map: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         # HACK: We parse again the cli args here to get the pretrained path if there was one.
