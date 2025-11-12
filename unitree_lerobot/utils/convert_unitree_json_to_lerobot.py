@@ -113,9 +113,22 @@ class JsonDataset:
         for sample_data in episode_data["data"]:
             data_array = np.array([], dtype=np.float32)
             for part in parts:
-                if part in sample_data[key] and sample_data[key][part] is not None:
-                    qpos = np.array(sample_data[key][part]["qpos"], dtype=np.float32)
-                    data_array = np.concatenate([data_array, qpos])
+                key_parts = part.split(".")
+                qpos = None
+                for key_part in key_parts:
+                    if qpos is None and key_part in sample_data[key] and sample_data[key][key_part] is not None:
+                        qpos = sample_data[key][key_part]
+                    else:
+                        if qpos is None:
+                            raise ValueError(f"qpos is None for part: {part}")
+                        qpos = qpos[key_part]
+                if qpos is None:
+                    raise ValueError(f"qpos is None for part: {part}")
+                if isinstance(qpos, list):
+                    qpos = np.array(qpos, dtype=np.float32).flatten()
+                else:
+                    qpos = np.array([qpos], dtype=np.float32).flatten()
+                data_array = np.concatenate([data_array, qpos])
             result.append(data_array)
         return np.array(result)
 
