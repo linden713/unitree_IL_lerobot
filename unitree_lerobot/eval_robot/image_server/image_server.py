@@ -259,7 +259,7 @@ class ImageServer:
                             logger_mp.error("[Image Server] Head camera frame read is error.")
                             break
                     elif self.head_camera_type == "realsense":
-                        color_image, depth_im啊ge = cam.get_frame()
+                        color_image, depth_image = cam.get_frame()
                         if color_image is None:
                             logger_mp.error("[Image Server] Head camera frame read is error.")
                             break
